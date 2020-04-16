@@ -827,8 +827,6 @@ def main(args):
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
                             args.gradient_accumulation_steps))
-    args.train_batch_size = \
-        args.train_batch_size // args.gradient_accumulation_steps
 
     if not args.do_train and not args.do_eval:
         raise ValueError("At least one of `do_train` or `do_eval` must be True.")
@@ -909,7 +907,8 @@ def main(args):
         logger.info("***** Train *****")
         logger.info("  Num orig examples = %d", len(train_examples))
         logger.info("  Num split examples = %d", len(train_features))
-        logger.info("  Batch size = %d", args.train_batch_size)
+        logger.info("  Total Batch size = %d", args.train_batch_size * args.gradient_accumulation_steps)
+        logger.info("  Gradient Accumulation Steps = %d", args.gradient_accumulation_steps)
         logger.info("  Num steps = %d", num_train_optimization_steps)
 
         eval_step = max(1, len(train_batches) // args.eval_per_epoch)
@@ -1006,6 +1005,7 @@ def main(args):
                             result['epoch'] = epoch
                             result['learning_rate'] = lr
                             result['batch_size'] = args.train_batch_size
+                            result['gradient_accumulation_steps'] = args.gradient_accumulation_steps
                             if (best_result is None) or (result[args.eval_metric] > best_result[args.eval_metric]):
                                 best_result = result
                                 save_model = True
@@ -1099,7 +1099,9 @@ if __name__ == "__main__":
         parser.add_argument("--do_eval", action='store_true', help="Whether to run eval on the dev set.")
         parser.add_argument("--do_lower_case", action='store_true', help="Set this flag if you are using an uncased model.")
         parser.add_argument("--eval_test", action='store_true', help='Wehther to run eval on the test set.')
-        parser.add_argument("--train_batch_size", default=32, type=int, help="Total batch size for training.")
+        parser.add_argument("--train_batch_size", default=6, type=int,
+                            help=("Batch size for training. The total batch size is this value, multiplied by the "
+                                  "number of gradient accumulation steps."))
         parser.add_argument("--eval_batch_size", default=8, type=int, help="Total batch size for predictions.")
         parser.add_argument("--learning_rate", default=None, type=float, help="The initial learning rate for Adam.")
         parser.add_argument("--num_train_epochs", default=3.0, type=float,
