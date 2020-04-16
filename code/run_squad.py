@@ -991,9 +991,14 @@ def main(args):
                         optimizer.zero_grad()
                         global_step += 1
 
+                    if (step + 1) % args.log_step == 0:
+                        logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
+                            epoch, step + 1, len(train_batches), time.time() - start_time, tr_loss / nb_tr_steps))
+
                     if (step + 1) % eval_step == 0:
                         logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
                             epoch, step + 1, len(train_batches), time.time() - start_time, tr_loss / nb_tr_steps))
+                        logger.info("Evaluating")
 
                         save_model = False
                         if args.do_eval:
@@ -1086,6 +1091,8 @@ if __name__ == "__main__":
         parser.add_argument("--test_file", default=None, type=str)
         parser.add_argument("--eval_per_epoch", default=10, type=int,
                             help="How many times it evaluates on dev set per epoch")
+        parser.add_argument("--log_step", default=10, type=int,
+                            help="How often to log progress to the console")
         parser.add_argument("--max_seq_length", default=384, type=int,
                             help="The maximum total input sequence length after WordPiece tokenization. Sequences "
                                  "longer than this will be truncated, and sequences shorter than this will be padded.")
